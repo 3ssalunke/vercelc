@@ -53,7 +53,7 @@ type (
 	// Config stores complete configuration
 	Config struct {
 		App           AppConfig
-		UploadService UploadService
+		UploadService Uploadservice
 		S3            S3Config
 	}
 
@@ -63,20 +63,21 @@ type (
 		Environment environment
 	}
 
-	UploadService struct {
-		Web UploadServiceWebConfig
+	Uploadservice struct {
+		Web WebConfig
 	}
 
 	// WebConfig stores HTTP configuration
-	UploadServiceWebConfig struct {
-		Hostname string `yaml:"upload_service_hostname" env:"upload_service_hostname"`
-		Port     uint16 `yaml:"upload_service_port" env:"upload_service_port"`
+	WebConfig struct {
+		Hostname string
+		Port     uint16
 	}
 
 	S3Config struct {
 		Accesskey string
 		Secretkey string
 		Region    string
+		Bucket    string
 	}
 )
 
@@ -88,9 +89,9 @@ func GetConfig() (Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("config")
-	viper.AddConfigPath("../config")
-	viper.AddConfigPath("../../config")
+	viper.AddConfigPath("shared/config")
+	viper.AddConfigPath("../shared/config")
+	viper.AddConfigPath("../../shared/config")
 
 	// Load env variables
 	viper.SetEnvPrefix("vercelc")

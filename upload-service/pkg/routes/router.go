@@ -12,10 +12,8 @@ import (
 )
 
 const (
-	routePageHome           = "home"
-	routerPageCoding        = "coding"
-	routerApiProject        = "project"
-	routerOrchestratorStart = "start"
+	routePageHome   = "home"
+	routerApiUpload = "upload"
 )
 
 // BuildRouter builds the router
@@ -43,9 +41,15 @@ func BuildRouter(c *services.Container) {
 	c.Web.HTTPErrorHandler = err.Get
 
 	pageRoutes(g, ctr)
+	apiRoutes(g, ctr)
 }
 
 func pageRoutes(g *echo.Group, ctr controller.Controller) {
 	home := home{Controller: ctr}
 	g.GET("/", home.Get).Name = routePageHome
+}
+
+func apiRoutes(g *echo.Group, ctr controller.Controller) {
+	upload := upload{Controller: ctr}
+	g.POST("/deploy", upload.Post).Name = routerApiUpload
 }

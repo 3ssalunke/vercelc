@@ -22,6 +22,8 @@ type Container struct {
 
 	// TemplateRenderer stores a service to easily render and cache templates
 	TemplateRenderer *TemplateRenderer
+
+	S3Storage *S3Storage
 }
 
 // NewContainer creates and initializes a new Container
@@ -31,6 +33,7 @@ func NewContainer() *Container {
 	c.initValidator()
 	c.initWeb()
 	c.initTemplateRenderer()
+	c.initS3Storage()
 	return c
 }
 
@@ -71,4 +74,12 @@ func (c *Container) initWeb() {
 // initTemplateRenderer initializes the template renderer
 func (c *Container) initTemplateRenderer() {
 	c.TemplateRenderer = NewTemplateRenderer(c.Config)
+}
+
+func (c *Container) initS3Storage() {
+	storage, err := NewS3Storage(c.Config)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create s3 client: %v", err))
+	}
+	c.S3Storage = storage
 }
