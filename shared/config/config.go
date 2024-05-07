@@ -55,6 +55,7 @@ type (
 		App           AppConfig
 		UploadService Uploadservice
 		S3            S3Config
+		Redis         RedisConfig
 	}
 
 	// AppConfig stores application configuration
@@ -78,6 +79,12 @@ type (
 		Secretkey string
 		Region    string
 		Bucket    string
+	}
+
+	RedisConfig struct {
+		Hostname string
+		Port     uint16
+		Queue    string
 	}
 )
 

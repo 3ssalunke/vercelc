@@ -4,9 +4,15 @@ import (
 	"fmt"
 
 	"github.com/3ssalunke/vercelc/shared/config"
+	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 )
+
+type RedisConnections struct {
+	Publisher  *redis.Client
+	Subscriber *redis.Client
+}
 
 // Container contains all services used by the application and provides an easy way to handle dependency
 // injection including within tests
@@ -24,6 +30,8 @@ type Container struct {
 	TemplateRenderer *TemplateRenderer
 
 	S3Storage *S3Storage
+
+	RedisConn *RedisConnections
 }
 
 // NewContainer creates and initializes a new Container
@@ -34,6 +42,7 @@ func NewContainer() *Container {
 	c.initWeb()
 	c.initTemplateRenderer()
 	c.initS3Storage()
+	c.initRedis()
 	return c
 }
 
@@ -82,4 +91,9 @@ func (c *Container) initS3Storage() {
 		panic(fmt.Sprintf("failed to create s3 client: %v", err))
 	}
 	c.S3Storage = storage
+}
+
+func (c *Container) initRedis() {
+	c.RedisConn.Publisher = NewRedisConnection(c.Config)
+	c.RedisConn.Subscriber = NewRedisConnection(c.Config)
 }

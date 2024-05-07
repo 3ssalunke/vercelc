@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -22,7 +24,13 @@ type S3Storage struct {
 }
 
 func NewS3Storage(cfg *Cfg.Config) (*S3Storage, error) {
-	awsConfig, err := config.LoadDefaultConfig(context.TODO(), config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.S3.Accesskey, cfg.S3.Secretkey, "")), config.WithRegion(cfg.S3.Region))
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		},
+	}
+
+	awsConfig, err := config.LoadDefaultConfig(context.TODO(), config.WithHTTPClient(httpClient), config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.S3.Accesskey, cfg.S3.Secretkey, "")), config.WithRegion(cfg.S3.Region))
 	if err != nil {
 		log.Printf("unable to load AWS SDK config, %v", err)
 		return nil, fmt.Errorf("unable to load AWS SDK config, %v", err)
@@ -46,43 +54,42 @@ func (storage *S3Storage) CopyFolder(projectId string) error {
 	if err != nil {
 		return err
 	}
+	currentDir = strings.Replace(currentDir, "\\", "/", -1)
+
 	// Walk through local folder and upload files to S3
 	err = filepath.Walk(localFolderPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		filekey := strings.TrimPrefix(path, fmt.Sprintf("%s/", currentDir))
+		updatedPath := strings.Replace(path, "\\", "/", -1)
+		filekey := strings.TrimPrefix(updatedPath, fmt.Sprintf("%s/", currentDir))
+
 		// Skip directories
 		if info.IsDir() {
 			return nil
 		}
 
+		// Skip hidden directories/files
 		if strings.ContainsRune(filepath.Dir(path), '.') {
 			return nil
 		}
 
-		// Open the file
+		// // Open the file
 		file, err := os.Open(path)
 		if err != nil {
 			return err
 		}
 		defer file.Close()
 
-		// Calculate the size of the file
-		fileInfo, err := file.Stat()
-		if err != nil {
-			return err
-		}
-		fileSize := fileInfo.Size()
-		log.Println(fileSize)
+		var partMiBs int64 = 10
+		// Create a new uploader with custom options
+		uploader := manager.NewUploader(storage.Client, func(u *manager.Uploader) {
+			u.PartSize = partMiBs * 1024 * 1024
+		})
 
-		if fileSize > 2000 {
-			return nil
-		}
-
-		// Upload the file to S3
-		_, err = storage.Client.PutObject(context.TODO(), &s3.PutObjectInput{
+		// Upload the file with multipart upload
+		_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
 			Bucket: aws.String(storage.Bucket),
 			Key:    aws.String(filekey),
 			Body:   file,

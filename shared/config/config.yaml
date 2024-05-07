@@ -12,3 +12,8 @@ s3:
   secretkey: ""
   region: "ap-south-1"
   bucket: "vercelc"
+
+redis:
+  hostname: "localhost"
+  port: 6379
+  queue: "build-queue"

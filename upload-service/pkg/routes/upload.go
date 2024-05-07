@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -48,5 +49,7 @@ func (c *upload) Post(ctx echo.Context) error {
 		log.Printf("error copying repo to s3: %v", err)
 		return ctx.JSON(http.StatusInternalServerError, &uploadResponsePayload{Error: err.Error()})
 	}
+	c.Container.RedisConn.Publisher.LPush(context.TODO(), c.Container.Config.Redis.Queue, projectId)
+	c.Container.RedisConn.Publisher.HSet(context.TODO(), c.Container.Config.Redis.Queue, projectId, "uploaded")
 	return ctx.JSON(200, map[string]string{"Hello": "Bye"})
 }

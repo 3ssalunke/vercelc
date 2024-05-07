@@ -1,0 +1,7 @@
+bin
+output
+Makefile
+.dockerignore
+.git
+.gitignore
+docker-compose.yaml

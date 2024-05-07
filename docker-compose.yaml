@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  upload-service:
+    container_name: upload-service
+    build:
+      context: .
+      dockerfile: ./upload-service/Dockerfile
+    ports:
+      - "8000:8000"
