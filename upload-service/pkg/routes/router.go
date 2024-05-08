@@ -14,6 +14,7 @@ import (
 const (
 	routePageHome   = "home"
 	routerApiUpload = "upload"
+	routerApiStatus = "status"
 )
 
 // BuildRouter builds the router
@@ -52,4 +53,7 @@ func pageRoutes(g *echo.Group, ctr controller.Controller) {
 func apiRoutes(g *echo.Group, ctr controller.Controller) {
 	upload := upload{Controller: ctr}
 	g.POST("/deploy", upload.Post).Name = routerApiUpload
+
+	status := status{Controller: ctr}
+	g.GET("/status", status.Get).Name = routerApiStatus
 }

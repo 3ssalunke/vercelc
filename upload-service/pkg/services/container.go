@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/3ssalunke/vercelc/shared/config"
-	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
+	"github.com/redis/go-redis/v9"
 )
 
 type RedisConnections struct {
@@ -94,6 +94,16 @@ func (c *Container) initS3Storage() {
 }
 
 func (c *Container) initRedis() {
-	c.RedisConn.Publisher = NewRedisConnection(c.Config)
-	c.RedisConn.Subscriber = NewRedisConnection(c.Config)
+	pub, err := NewRedisConnection(c.Config)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create publisher redis client %v", err))
+	}
+	sub, err := NewRedisConnection(c.Config)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create subscriber redis client %v", err))
+	}
+	c.RedisConn = &RedisConnections{
+		Publisher:  pub,
+		Subscriber: sub,
+	}
 }

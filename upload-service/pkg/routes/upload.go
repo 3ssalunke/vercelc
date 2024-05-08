@@ -49,7 +49,15 @@ func (c *upload) Post(ctx echo.Context) error {
 		log.Printf("error copying repo to s3: %v", err)
 		return ctx.JSON(http.StatusInternalServerError, &uploadResponsePayload{Error: err.Error()})
 	}
-	c.Container.RedisConn.Publisher.LPush(context.TODO(), c.Container.Config.Redis.Queue, projectId)
-	c.Container.RedisConn.Publisher.HSet(context.TODO(), c.Container.Config.Redis.Queue, projectId, "uploaded")
-	return ctx.JSON(200, map[string]string{"Hello": "Bye"})
+	_, err = c.Container.RedisConn.Publisher.LPush(context.TODO(), c.Container.Config.Redis.Buildqueue, projectId).Result()
+	if err != nil {
+		log.Printf("error publishing to build-queue: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, &uploadResponsePayload{Error: err.Error()})
+	}
+	_, err = c.Container.RedisConn.Publisher.HSet(context.TODO(), c.Container.Config.Redis.Statustracker, projectId, "uploaded").Result()
+	if err != nil {
+		log.Printf("error publishing to status tracker: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, &uploadResponsePayload{Error: err.Error()})
+	}
+	return ctx.JSON(200, &uploadResponsePayload{Id: projectId})
 }

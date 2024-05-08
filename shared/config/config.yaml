@@ -16,4 +16,5 @@ s3:
 redis:
   hostname: "localhost"
   port: 6379
-  queue: "build-queue"
+  buildqueue: "build-queue"
+  statustracker: "status"

@@ -82,9 +82,10 @@ type (
 	}
 
 	RedisConfig struct {
-		Hostname string
-		Port     uint16
-		Queue    string
+		Hostname      string
+		Port          uint16
+		Buildqueue    string
+		Statustracker string
 	}
 )
 
