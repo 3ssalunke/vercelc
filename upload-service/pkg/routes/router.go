@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	routePageHome   = "home"
-	routerApiUpload = "upload"
-	routerApiStatus = "status"
+	routePageHome    = "home"
+	routePageProject = "project"
+	routerApiUpload  = "deploy"
+	routerApiStatus  = "status"
 )
 
 // BuildRouter builds the router
@@ -48,11 +49,14 @@ func BuildRouter(c *services.Container) {
 func pageRoutes(g *echo.Group, ctr controller.Controller) {
 	home := home{Controller: ctr}
 	g.GET("/", home.Get).Name = routePageHome
+
+	project := project{Controller: ctr}
+	g.GET("/project/:projectId", project.Get).Name = routePageProject
 }
 
 func apiRoutes(g *echo.Group, ctr controller.Controller) {
-	upload := upload{Controller: ctr}
-	g.POST("/deploy", upload.Post).Name = routerApiUpload
+	deploy := deploy{Controller: ctr}
+	g.POST("/deploy", deploy.Post).Name = routerApiUpload
 
 	status := status{Controller: ctr}
 	g.GET("/status", status.Get).Name = routerApiStatus

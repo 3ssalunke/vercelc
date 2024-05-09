@@ -1,0 +1,15 @@
+{{define "homejsscript"}}
+    <script>
+        document.querySelector("#section-a form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            document.querySelector("#hiddenRepoUrl").value = document.querySelector("#repoUrl").value;
+            document.querySelector("#section-b").classList.remove("hidden");
+            document.querySelector("#section-a").classList.add("hidden");
+        });
+
+        function handleBackClick(){
+            document.querySelector("#section-a").classList.remove("hidden");
+            document.querySelector("#section-b").classList.add("hidden");
+        }
+    </script>
+{{end}}

@@ -1,3 +1,32 @@
 {{define "content"}}
-    <div>WELCOME TO VERCELC.</div>
+        <div class="flex justify-center items-center h-screen">
+            <div id="section-a">
+                <h1 class="text-4xl font-bold">Let's build something new.</h1>
+                <h4 class="texl-xl mt-1 text-gray">To deploy a new Project, import an existing Git Repository or get started with one of our Templates.</h4>
+                <form class="mt-8 p-4 border-2 border-slate-600 rounded">
+                    <h2 class="text-2xl font-semibold">Import Git Repository</h2>
+                    <input type="text" class="bg-black mt-2 px-2 py-1 w-full border rounded-md border-slate-600 focus:outline-0" placeholder="Enter git repository link" id="repoUrl" required/>
+                    <button class="text-black font-medium bg-white mt-4 px-3 py-2 rounded-md" type="submit">Import</button>
+                </form>
+            </div>
+
+            <div id="section-b" class="hidden">
+                <span class="mb-2 cursor-pointer" onclick="handleBackClick()">&larr; Back</span>
+                <h1 class="text-4xl font-bold">You're almost done.</h1>
+                <h4 class="texl-xl mt-1 text-gray">Please follow the steps to configure your Project and deploy it.</h4>
+                <form class="mt-8 mt-2 p-4 border-2 border-slate-600 rounded" hx-post="/deploy" hx-ext="json-enc" hx-headers='{"HX-Boosted": "true"}'>
+                    <h2 class="text-2xl font-semibold">Configure project</h2>
+                    <input id="hiddenRepoUrl" name="repoUrl" type="hidden" value="" required/>
+                    <label class="block mt-6 text-slate-400">Project Name</label>
+                    <input type="text" class="bg-black mt-2 px-2 py-1 w-full border rounded-md border-slate-600 focus:outline-none" name="projectName" id="projectName" required/>
+                    <label class="block mt-4 text-slate-400">Framework</label>
+                    <select class="bg-black w-full mt-2 p-1 border rounded-md border-slate-600 focus:outline-none" id="framework" name="framework" required>
+                        <option value="cra">Create React App</option>
+                    </select>
+                    <button class="w-full text-black font-medium bg-white mt-4 px-3 py-2 rounded-md" type="submit">Deploy</button>
+                </form>
+            </div>
+        </div>
+    
+    {{template "homejsscript" .}}
 {{end}}

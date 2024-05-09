@@ -20,7 +20,8 @@ const (
 )
 
 const (
-	PageHome Page = "home"
+	PageHome    Page = "home"
+	PageProject Page = "project"
 )
 
 // go:embed *
