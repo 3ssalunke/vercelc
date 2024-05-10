@@ -4,15 +4,10 @@ import (
 	"fmt"
 
 	"github.com/3ssalunke/vercelc/shared/config"
+	"github.com/3ssalunke/vercelc/shared/services"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
-	"github.com/redis/go-redis/v9"
 )
-
-type RedisConnections struct {
-	Publisher  *redis.Client
-	Subscriber *redis.Client
-}
 
 // Container contains all services used by the application and provides an easy way to handle dependency
 // injection including within tests
@@ -29,9 +24,9 @@ type Container struct {
 	// TemplateRenderer stores a service to easily render and cache templates
 	TemplateRenderer *TemplateRenderer
 
-	S3Storage *S3Storage
+	S3Storage *services.S3Storage
 
-	RedisConn *RedisConnections
+	RedisConn *services.RedisConnections
 }
 
 // NewContainer creates and initializes a new Container
@@ -86,7 +81,7 @@ func (c *Container) initTemplateRenderer() {
 }
 
 func (c *Container) initS3Storage() {
-	storage, err := NewS3Storage(c.Config)
+	storage, err := services.NewS3Storage(c.Config)
 	if err != nil {
 		panic(fmt.Sprintf("failed to create s3 client: %v", err))
 	}
@@ -94,16 +89,9 @@ func (c *Container) initS3Storage() {
 }
 
 func (c *Container) initRedis() {
-	pub, err := NewRedisConnection(c.Config)
+	conn, err := services.NewRedisConnection(c.Config)
 	if err != nil {
-		panic(fmt.Sprintf("failed to create publisher redis client %v", err))
+		panic(fmt.Sprintf("failed to create redis connections %v", err))
 	}
-	sub, err := NewRedisConnection(c.Config)
-	if err != nil {
-		panic(fmt.Sprintf("failed to create subscriber redis client %v", err))
-	}
-	c.RedisConn = &RedisConnections{
-		Publisher:  pub,
-		Subscriber: sub,
-	}
+	c.RedisConn = conn
 }
