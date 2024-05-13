@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -37,29 +39,29 @@ func (c *deploy) Post(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, &deployResponsePayload{Error: err.Error()})
 	}
 	projectId := util.GenerateRandomId()
-	// destinationFolder, err := util.GetLocalCloneFolder(projectId)
-	// if err != nil {
-	// 	log.Printf("error getting destination folder for cloning git repo: %v", err)
-	// 	return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
-	// }
-	// if err := util.CloneRepo(payload.RepoUrl, destinationFolder); err != nil {
-	// 	log.Printf("error cloning git repo: %v", err)
-	// 	return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
-	// }
-	// if err := c.Container.S3Storage.CopyFolder(projectId); err != nil {
-	// 	log.Printf("error copying repo to s3: %v", err)
-	// 	return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
-	// }
-	// _, err = c.Container.RedisConn.Publisher.LPush(context.TODO(), c.Container.Config.Redis.Buildqueue, projectId).Result()
-	// if err != nil {
-	// 	log.Printf("error publishing to build-queue: %v", err)
-	// 	return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
-	// }
-	// _, err = c.Container.RedisConn.Publisher.HSet(context.TODO(), c.Container.Config.Redis.Statustracker, projectId, "deployed").Result()
-	// if err != nil {
-	// 	log.Printf("error publishing to status tracker: %v", err)
-	// 	return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
-	// }
+	destinationFolder, err := util.GetPathForFolder(fmt.Sprintf("output/%s", projectId))
+	if err != nil {
+		log.Printf("error getting destination folder for cloning git repo: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
+	}
+	if err := util.CloneRepo(payload.RepoUrl, destinationFolder); err != nil {
+		log.Printf("error cloning git repo: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
+	}
+	if err := c.Container.S3Storage.CopyFolder(projectId); err != nil {
+		log.Printf("error copying repo to s3: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
+	}
+	_, err = c.Container.RedisConn.Publisher.LPush(context.TODO(), c.Container.Config.Redis.Buildqueue, projectId).Result()
+	if err != nil {
+		log.Printf("error publishing to build-queue: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
+	}
+	_, err = c.Container.RedisConn.Publisher.HSet(context.TODO(), c.Container.Config.Redis.Statustracker, projectId, "deployed").Result()
+	if err != nil {
+		log.Printf("error publishing to status tracker: %v", err)
+		return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
+	}
 
 	return c.Redirect(ctx, "project", projectId)
 }

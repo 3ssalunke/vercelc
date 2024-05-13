@@ -45,7 +45,7 @@ func NewS3Storage(cfg *Cfg.Config) (*S3Storage, error) {
 }
 
 func (storage *S3Storage) CopyFolder(projectId string) error {
-	localFolderPath, err := util.GetLocalCloneFolder(projectId)
+	localFolderPath, err := util.GetPathForFolder(fmt.Sprintf("output/%s", projectId))
 	if err != nil {
 		return err
 	}
@@ -108,5 +108,57 @@ func (storage *S3Storage) CopyFolder(projectId string) error {
 	}
 
 	fmt.Println("All files uploaded successfully")
+	return nil
+}
+
+func (storage *S3Storage) DownloadFolder(projectId string) error {
+	pathToDownloadedFolder, err := util.GetPathForFolder("build")
+	if err != nil {
+		return err
+	}
+
+	listObjectInput := &s3.ListObjectsV2Input{
+		Bucket: aws.String(storage.Bucket),
+		Prefix: aws.String(projectId),
+	}
+
+	paginator := s3.NewListObjectsV2Paginator(storage.Client, listObjectInput)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(context.TODO())
+		if err != nil {
+			return err
+		}
+
+		for _, obj := range page.Contents {
+			downloadInput := &s3.GetObjectInput{
+				Bucket: aws.String(storage.Bucket),
+				Key:    obj.Key,
+			}
+
+			resp, err := storage.Client.GetObject(context.TODO(), downloadInput)
+			if err != nil {
+				return err
+			}
+			defer resp.Body.Close()
+
+			filePath := filepath.Join(pathToDownloadedFolder, *obj.Key)
+			dirPath := filepath.Dir(filePath)
+			if err := os.MkdirAll(dirPath, os.ModePerm); err != nil {
+				return err
+			}
+
+			file, err := os.Create(filePath)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+
+			_, err = file.ReadFrom(resp.Body)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }

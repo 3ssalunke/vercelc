@@ -32,11 +32,11 @@ func GenerateRandomId() string {
 	return string(b)
 }
 
-func GetLocalCloneFolder(projectId string) (string, error) {
+func GetPathForFolder(folder string) (string, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
-	destination := filepath.Join(currentDir, "output", projectId)
+	destination := filepath.Join(currentDir, folder)
 	return destination, nil
 }
