@@ -44,8 +44,8 @@ func NewS3Storage(cfg *Cfg.Config) (*S3Storage, error) {
 	}, nil
 }
 
-func (storage *S3Storage) CopyFolder(projectId string) error {
-	localFolderPath, err := util.GetPathForFolder(fmt.Sprintf("output/%s", projectId))
+func (storage *S3Storage) CopyFolder(folderPath string) error {
+	localFolderPath, err := util.GetPathForFolder(folderPath)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,76 @@ func (storage *S3Storage) CopyFolder(projectId string) error {
 	return nil
 }
 
-func (storage *S3Storage) DownloadFolder(projectId string) error {
+func (storage *S3Storage) CopyBuildFolder(folderPath string) error {
+	localFolderPath, err := util.GetPathForFolder(folderPath)
+	if err != nil {
+		return err
+	}
+
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	currentDir = strings.Replace(currentDir, "\\", "/", -1)
+
+	// Walk through local folder and upload files to S3
+	err = filepath.Walk(localFolderPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		updatedPath := strings.Replace(path, "\\", "/", -1)
+		filekey := strings.TrimPrefix(updatedPath, fmt.Sprintf("%s/", currentDir+"/build"))
+		filekey = strings.Replace(filekey, "build", "dist", -1)
+		log.Println(filekey)
+
+		// Skip directories
+		if info.IsDir() {
+			return nil
+		}
+
+		// Skip hidden directories/files
+		if strings.ContainsRune(filepath.Dir(path), '.') {
+			return nil
+		}
+
+		// // Open the file
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		var partMiBs int64 = 10
+		// Create a new uploader with custom options
+		uploader := manager.NewUploader(storage.Client, func(u *manager.Uploader) {
+			u.PartSize = partMiBs * 1024 * 1024
+		})
+
+		// Upload the file with multipart upload
+		_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+			Bucket: aws.String(storage.Bucket),
+			Key:    aws.String(filekey),
+			Body:   file,
+		})
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Uploaded", path, "to", storage.Bucket+"/"+filekey)
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("All files uploaded successfully")
+	return nil
+}
+
+func (storage *S3Storage) DownloadFolder(folderPath string) error {
 	pathToDownloadedFolder, err := util.GetPathForFolder("build")
 	if err != nil {
 		return err
@@ -119,7 +188,7 @@ func (storage *S3Storage) DownloadFolder(projectId string) error {
 
 	listObjectInput := &s3.ListObjectsV2Input{
 		Bucket: aws.String(storage.Bucket),
-		Prefix: aws.String(projectId),
+		Prefix: aws.String(folderPath),
 	}
 
 	paginator := s3.NewListObjectsV2Paginator(storage.Client, listObjectInput)

@@ -48,7 +48,7 @@ func (c *deploy) Post(ctx echo.Context) error {
 		log.Printf("error cloning git repo: %v", err)
 		return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
 	}
-	if err := c.Container.S3Storage.CopyFolder(projectId); err != nil {
+	if err := c.Container.S3Storage.CopyFolder(fmt.Sprintf("output/%s", projectId)); err != nil {
 		log.Printf("error copying repo to s3: %v", err)
 		return ctx.JSON(http.StatusInternalServerError, &deployResponsePayload{Error: err.Error()})
 	}
