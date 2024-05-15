@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -230,4 +231,23 @@ func (storage *S3Storage) DownloadFolder(folderPath string) error {
 	}
 
 	return nil
+}
+
+func (storage *S3Storage) DownloadFile(key string) ([]byte, error) {
+	getObjectInput := &s3.GetObjectInput{
+		Bucket: aws.String(storage.Bucket),
+		Key:    aws.String(key),
+	}
+
+	obj, err := storage.Client.GetObject(context.TODO(), getObjectInput)
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := io.ReadAll(obj.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
 }

@@ -7,6 +7,11 @@ uploadservice:
     hostname: "localhost"
     port: 8000
 
+requesthandler:
+  web:
+    hostname: "localhost"
+    port: 8001
+
 s3:
   accesskey: ""
   secretkey: ""

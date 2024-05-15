@@ -22,6 +22,18 @@ runb-deploy-service: build-deploy-service
 run-deploy-service:
 	@go run deploy-service/cmd/main.go
 
+# build go exec for deploy service
+build-request-handler:
+	@go build -o ./bin/request-handler ./request-handler/cmd/main.go
+
+# run deploy service build
+runb-request-handler: build-request-handler
+	@./bin/request-handler
+
+# run deploy service
+run-request-handler:
+	@go run request-handler/cmd/main.go
+
 # Run all tests
 test:
 	@go test -count=1 -p 1 ./...

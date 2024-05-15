@@ -52,10 +52,11 @@ func SwitchEnvironment(env environment) {
 type (
 	// Config stores complete configuration
 	Config struct {
-		App           AppConfig
-		UploadService Uploadservice
-		S3            S3Config
-		Redis         RedisConfig
+		App            AppConfig
+		UploadService  Uploadservice
+		RequestHandler Requesthandler
+		S3             S3Config
+		Redis          RedisConfig
 	}
 
 	// AppConfig stores application configuration
@@ -65,6 +66,10 @@ type (
 	}
 
 	Uploadservice struct {
+		Web WebConfig
+	}
+
+	Requesthandler struct {
 		Web WebConfig
 	}
 
